@@ -1,11 +1,11 @@
-#**Sistem Manajemen Barbershop**
-#**Mini Project 2 Praktikum Pemrograman Berorientasi Objek (PBO)**
+# **Sistem Manajemen Barbershop**
+# **Mini Project 2 Praktikum Pemrograman Berorientasi Objek (PBO)**
 
 Nama: Aura Putri Anandita Syarif NIM: 2509116094 Program Studi: Sistem Informasi (C)
 
 ============================================================================
 
-##**Deskripsi Singkat Program**
+## **Deskripsi Singkat Program**
 
 Sistem Manajemen Barbershop adalah program berbasis Java yang dibuat untuk membantu mengelola operasional sebuah barbershop, mulai dari data pelanggan dan barber, pemilihan layanan, antrean pelanggan, proses pelayanan, hingga pembayaran.
 
@@ -15,7 +15,7 @@ Data pada program ini masih disimpan sementara menggunakan ArrayList selama prog
 
 ============================================================================
 
-##**Alur Program**
+## **Alur Program**
 
 Saat program dijalankan, pengguna akan masuk ke menu utama yang menyediakan beberapa pilihan: pengelolaan pelanggan, pengelolaan barber, daftar layanan, pelayanan pelanggan, pengecekan status pelanggan dan barber, serta ringkasan barbershop.
 
@@ -29,7 +29,7 @@ Program juga sudah diisi beberapa data contoh sejak awal dijalankan (layanan, pe
 
 ============================================================================
 
-##**Contoh Dokumentasi Program**
+## **Contoh Dokumentasi Program**
 - Kelola Pelanggan
 Tambah Pelanggan
 <img width="678" height="622" alt="image" src="https://github.com/user-attachments/assets/018c8752-c871-4960-9ef9-3eb557a77b35" />
@@ -92,7 +92,7 @@ Batalkan Pelayanan
 
 ============================================================================
 
-##**Struktur Package (MVC)**
+## **Struktur Package (MVC)**
 <img width="442" height="377" alt="image" src="https://github.com/user-attachments/assets/964ccdd1-d1af-4ec9-a912-b554de1af705" />
 
 Struktur ini dipisah menjadi tiga bagian besar supaya masing-masing hanya mengurus satu tanggung jawab:
@@ -104,16 +104,16 @@ Struktur ini dipisah menjadi tiga bagian besar supaya masing-masing hanya mengur
 
 ============================================================================
 
-##**Penerapan Encapsulation dan Inheritance**
+## **Penerapan Encapsulation dan Inheritance**
 
-###***Encapsulation***
+### ***Encapsulation***
 Encapsulation diterapkan dengan membuat atribut pada tiap class bersifat private, serta menggunakan getter dan setter untuk mengakses atau mengubah data. Bedanya dengan getter/setter biasa, setter di program ini juga memvalidasi nilai sebelum disimpan bukan sekadar menyimpan apa pun yang dimasukkan. Contohnya:
 - Barber.setPengalaman() menolak nilai pengalaman yang negatif atau lebih dari 50 tahun.
 - Pelanggan.setNoHp() menolak nomor HP yang formatnya tidak sesuai nomor Indonesia yang wajar.
 
 Seluruh ArrayList data (pelanggan, barber, layanan, pelayanan) di BarbershopController juga bersifat private final, sehingga tidak ada bagian program lain yang bisa mengubah isinya secara langsung semua harus lewat method publik yang memang disediakan.
 
-###***Inheritance***
+### ***Inheritance***
 Terdapat satu superclass abstract, Orang, yang diturunkan menjadi dua cabang, dan masing-masing cabang diturunkan sekali lagi:
 - Orang menyimpan atribut yang dimiliki semua orang di sistem ini: ID dan nama. Method getPeran() dibuat abstract, sehingga setiap turunannya wajib mendefinisikan perannya sendiri.
 - Pelanggan adalah pelanggan biasa, tidak mendapat diskon.
@@ -125,11 +125,11 @@ Perbedaan perilaku antar-subclass ini benar-benar dipakai dalam perhitungan tota
 
 ============================================================================
 
-##**Penerapan Nilai Tambah**
-###***Struktur MVC***
+## **Penerapan Nilai Tambah**
+### ***Struktur MVC***
 Sudah dijelaskan lengkap pada bagian Struktur Package (MVC) di atas.
 
-###***Polymorphism***
+### ***Polymorphism***
 Diterapkan dalam dua bentuk:
 
 - Method overriding 
@@ -139,7 +139,7 @@ Di Controller/BarbershopController.java, method tambahPelanggan() dan tambahBarb
 
 ============================================================================
 
-##**Aturan Bisnis Tambahan**
+## **Aturan Bisnis Tambahan**
 Selain empat ketentuan wajib, program ini juga menambahkan beberapa aturan supaya datanya tetap konsisten dan masuk akal:
 
 - Validasi input mencegah berbagai kesalahan, seperti ID kosong, ID yang sudah digunakan, data yang tidak ditemukan, dan pilihan menu yang tidak tersedia.
