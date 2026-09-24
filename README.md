@@ -32,67 +32,87 @@ Program juga sudah diisi beberapa data contoh sejak awal dijalankan (layanan, pe
 ## **Contoh Dokumentasi Program**
 - Kelola Pelanggan
 Tambah Pelanggan
+
 <img width="678" height="622" alt="image" src="https://github.com/user-attachments/assets/018c8752-c871-4960-9ef9-3eb557a77b35" />
 
 Tampilkan Pelanggan
+
 <img width="651" height="786" alt="image" src="https://github.com/user-attachments/assets/03d595d5-1a35-4dfd-a70e-c6341ec63337" />
 
 Ubah Pelanggan
+
 <img width="520" height="266" alt="image" src="https://github.com/user-attachments/assets/bad973e6-9348-4520-ad06-c9c612018290" />
 
 Hapus Pelanggan
+
 <img width="492" height="241" alt="image" src="https://github.com/user-attachments/assets/2aab6e40-e62d-4dc6-865d-f8fabd865b7f" />
 
 - Kelola Barber
 Tambah Barber
+
 <img width="726" height="590" alt="image" src="https://github.com/user-attachments/assets/04f89b1c-a026-4ee0-a880-e81ecc4d9618" />
 
 Tampilkan Barber
+
 <img width="462" height="753" alt="image" src="https://github.com/user-attachments/assets/5fb6bbdd-7547-4646-a662-6598f2fe6508" />
 
 Ubah Barber
+
 <img width="497" height="231" alt="image" src="https://github.com/user-attachments/assets/acd02a7d-f495-43b9-8ec4-71c086866f2b" />
 
 Hapus Barber
+
 <img width="385" height="217" alt="image" src="https://github.com/user-attachments/assets/13168409-f89a-4bf1-a996-4cce17a97085" />
 
 Ubah Status Kehadiran
+
 <img width="481" height="240" alt="image" src="https://github.com/user-attachments/assets/fe0ce257-9c22-42e0-868a-bbdf1987a752" />
 
 - Lihat Daftar Layanan
+  
 <img width="422" height="260" alt="image" src="https://github.com/user-attachments/assets/364ff716-a909-4d6d-bca4-6c7483829e44" />
 
 - Pelayanan Pelanggan
 Daftarkan Pelayanan
+
 <img width="570" height="567" alt="image" src="https://github.com/user-attachments/assets/c86a6b38-eaab-4f94-bfb1-d3677076930d" />
 
 Tampilkan Semua Pelayanan
+
 <img width="718" height="767" alt="image" src="https://github.com/user-attachments/assets/3ab597c7-5ad2-4a44-bdd6-c7eafa839339" />
 
 Mulai Pelayanan
+
 <img width="370" height="192" alt="image" src="https://github.com/user-attachments/assets/0132b3a6-e97f-4742-a6d5-0b1edcd10071" />
 
 Selesaikan Pelayanan
+
 <img width="397" height="202" alt="image" src="https://github.com/user-attachments/assets/5a7633f0-28e3-4bcd-98e1-5c185571d3c8" />
 
 Pembayaran
+
 <img width="365" height="252" alt="image" src="https://github.com/user-attachments/assets/8d5c6d67-383f-45cb-a1d5-ecddcc64518f" />
 
 Batalkan Pelayanan
+
 <img width="392" height="196" alt="image" src="https://github.com/user-attachments/assets/6d98253d-e22a-4de0-afd1-bc81822e00ec" />
 
 - Cek Status Pelanggan
+  
 <img width="586" height="517" alt="image" src="https://github.com/user-attachments/assets/615e1c3d-94cf-4c84-9fdc-a9dadf23bcd0" />
 
 - Lihat Status Barber
+  
 <img width="565" height="633" alt="image" src="https://github.com/user-attachments/assets/06f15505-157d-4885-b039-09e3c6fd5d94" />
 
 - Ringkasan Barber
+  
 <img width="638" height="536" alt="image" src="https://github.com/user-attachments/assets/fca1e89b-c87e-4d19-8ff8-b911eb1802de" />
 
 ============================================================================
 
 ## **Struktur Package (MVC)**
+
 <img width="442" height="377" alt="image" src="https://github.com/user-attachments/assets/964ccdd1-d1af-4ec9-a912-b554de1af705" />
 
 Struktur ini dipisah menjadi tiga bagian besar supaya masing-masing hanya mengurus satu tanggung jawab:
