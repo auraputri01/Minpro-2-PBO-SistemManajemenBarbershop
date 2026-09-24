@@ -1,6 +1,7 @@
 package model;
 
 import util.Validator;
+
 /**
  * SUPER-CLASS (abstract) untuk semua orang di dalam sistem barbershop.
  * Sub-class: Pelanggan dan Barber.

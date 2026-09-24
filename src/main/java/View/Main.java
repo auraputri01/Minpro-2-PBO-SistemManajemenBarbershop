@@ -1,82 +1,34 @@
-package com.mycompany.sistemmanajemenbarbershop;
+package View;
 
-import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.function.Predicate;
+import controller.BarbershopController;
 import model.Barber;
-import model.BarberSenior;
 import model.Layanan;
 import model.Pelanggan;
-import model.PelangganMember;
 import model.Pelayanan;
 import util.Format;
 import util.Validator;
 
 /**
- * Titik masuk program: antarmuka konsol Sistem Manajemen Barbershop.
+ * VIEW: satu-satunya class yang melakukan input/output (Scanner, System.out).
+ * Semua data dan aturan bisnis (ArrayList, perhitungan, validasi status)
+ * ada di {@link BarbershopController} - class ini hanya menampilkan menu,
+ * membaca input, memanggil Controller, lalu menampilkan hasilnya.
  *
  * @author Aura
  */
 public class Main {
-    private final ArrayList<Pelanggan> daftarPelanggan = new ArrayList<>();
-    private final ArrayList<Barber> daftarBarber = new ArrayList<>();
-    private final ArrayList<Layanan> daftarLayanan = new ArrayList<>();
-    private final ArrayList<Pelayanan> daftarPelayanan = new ArrayList<>();
+    private final BarbershopController controller = new BarbershopController();
     private final Scanner input = new Scanner(System.in);
-    private int nomorAntreanBerikutnya = 1;
-    private int nomorPelayananBerikutnya = 1;
 
     /** Dilempar saat pengguna mengetik "batal" di tengah pengisian data. */
     private static class InputBatalException extends RuntimeException {
         private static final long serialVersionUID = 1L;
     }
 
-    public Main() {
-        isiDataAwal();
-    }
-
-    // ==================================================================
-    // DUMMY DATA AWAL (langsung tampil saat fitur read dijalankan)
-    // ==================================================================
-    private void isiDataAwal() {
-        // --- Layanan ---
-        daftarLayanan.add(new Layanan("L001", "Regular Haircut", 35000, 30));
-        daftarLayanan.add(new Layanan("L002", "Premium Haircut", 50000, 45));
-        daftarLayanan.add(new Layanan("L003", "Haircut + Wash", 60000, 60));
-        daftarLayanan.add(new Layanan("L004", "Haircut + Shaving", 70000, 60));
-
-        // --- Pelanggan (reguler & member) ---
-        daftarPelanggan.add(new PelangganMember("P001", "Andi Pratama", "081234567801"));
-        daftarPelanggan.add(new Pelanggan("P002", "Budi Santoso", "081234567802"));
-        daftarPelanggan.add(new Pelanggan("P003", "Citra Lestari", "081234567803"));
-        daftarPelanggan.add(new PelangganMember("P004", "Dedi Kurniawan", "081234567804"));
-
-        // --- Barber (senior & biasa) ---
-        daftarBarber.add(new BarberSenior("B001", "Rizky Ramadhan", 8));
-        daftarBarber.add(new Barber("B002", "Dimas Saputra", 3));
-        daftarBarber.add(new Barber("B003", "Fajar Nugroho", 1));
-
-        // --- Pelayanan dengan status berbeda-beda ---
-        // PL001: Andi (member) - Rizky (senior) - sedang DIPROSES
-        Pelayanan pl1 = buatPelayanan(cariPelanggan("P001"), cariBarber("B001"), cariLayanan("L002"));
-        pl1.setStatusPelayanan(Pelayanan.DIPROSES);
-
-        // PL002: Budi - Dimas - MENUNGGU
-        buatPelayanan(cariPelanggan("P002"), cariBarber("B002"), cariLayanan("L001"));
-
-        // PL003: Citra - Dimas - SELESAI dan sudah LUNAS (QRIS)
-        Barber dimas = cariBarber("B002");
-        Pelayanan pl3 = buatPelayanan(cariPelanggan("P003"), dimas, cariLayanan("L003"));
-        pl3.setStatusPelayanan(Pelayanan.SELESAI);
-        dimas.kurangiPelanggan();
-        pl3.setMetodePembayaran(Pelayanan.QRIS);
-        pl3.setStatusPembayaran(Pelayanan.LUNAS);
-    }
-
-    // ==================================================================
     // MENU UTAMA
-    // ==================================================================
     public void jalankanProgram() {
         boolean menu = true;
 
@@ -126,9 +78,7 @@ public class Main {
         }
     }
 
-    // ==================================================================
     // KELOLA PELANGGAN
-    // ==================================================================
     private void menuPelanggan() {
         boolean menu = true;
 
@@ -169,7 +119,7 @@ public class Main {
         System.out.println();
         System.out.println("TAMBAH PELANGGAN (ketik 'batal' untuk membatalkan)");
 
-        String id = bacaIdBaru("ID Pelanggan (3-10 huruf/angka): ", kode -> cariPelanggan(kode) != null);
+        String id = bacaIdBaru("ID Pelanggan (3-10 huruf/angka): ", controller::idPelangganSudahAda);
         String nama = bacaNama("Nama: ");
         String noHp = bacaNoHp("No HP: ");
 
@@ -179,10 +129,10 @@ public class Main {
         int jenis = bacaPilihan("Pilih: ", 1, 2);
 
         try {
+            // Memakai overloading di Controller: dengan/tanpa parameter "member"
             Pelanggan pelanggan = (jenis == 1)
-                    ? new Pelanggan(id, nama, noHp)
-                    : new PelangganMember(id, nama, noHp);
-            daftarPelanggan.add(pelanggan);
+                    ? controller.tambahPelanggan(id, nama, noHp)
+                    : controller.tambahPelanggan(id, nama, noHp, true);
             System.out.println("Pelanggan berhasil ditambahkan sebagai " + pelanggan.getPeran() + ".");
         } catch (IllegalArgumentException e) {
             System.out.println("Gagal: " + e.getMessage());
@@ -192,12 +142,12 @@ public class Main {
     private void tampilkanPelanggan() {
         System.out.println();
         System.out.println("DAFTAR PELANGGAN");
-        if (daftarPelanggan.isEmpty()) {
+        if (controller.getDaftarPelanggan().isEmpty()) {
             System.out.println("Data pelanggan masih kosong.");
             return;
         }
 
-        for (Pelanggan pelanggan : daftarPelanggan) {
+        for (Pelanggan pelanggan : controller.getDaftarPelanggan()) {
             System.out.println("============================");
             pelanggan.tampilkanData();
             System.out.println("============================");
@@ -207,7 +157,7 @@ public class Main {
     private void ubahPelanggan() {
         System.out.println();
         System.out.println("UBAH PELANGGAN (ketik 'batal' untuk membatalkan)");
-        Pelanggan pelanggan = cariPelanggan(bacaInput("Masukkan ID Pelanggan: "));
+        Pelanggan pelanggan = controller.cariPelanggan(bacaInput("Masukkan ID Pelanggan: "));
 
         if (pelanggan == null) {
             System.out.println("Pelanggan tidak ditemukan.");
@@ -218,8 +168,7 @@ public class Main {
         String noHp = bacaNoHp("No HP baru: ");
 
         try {
-            pelanggan.setNama(nama);
-            pelanggan.setNoHp(noHp);
+            controller.ubahPelanggan(pelanggan, nama, noHp);
             System.out.println("Data pelanggan berhasil diubah.");
         } catch (IllegalArgumentException e) {
             System.out.println("Gagal: " + e.getMessage());
@@ -229,16 +178,10 @@ public class Main {
     private void hapusPelanggan() {
         System.out.println();
         System.out.println("HAPUS PELANGGAN (ketik 'batal' untuk membatalkan)");
-        Pelanggan pelanggan = cariPelanggan(bacaInput("Masukkan ID Pelanggan: "));
+        Pelanggan pelanggan = controller.cariPelanggan(bacaInput("Masukkan ID Pelanggan: "));
 
         if (pelanggan == null) {
             System.out.println("Pelanggan tidak ditemukan.");
-            return;
-        }
-
-        if (punyaPelayananAktif(pelanggan.getIdPelanggan())) {
-            System.out.println("Pelanggan masih memiliki pelayanan aktif.");
-            System.out.println("Data tidak dapat dihapus.");
             return;
         }
 
@@ -247,13 +190,15 @@ public class Main {
             return;
         }
 
-        daftarPelanggan.remove(pelanggan);
-        System.out.println("Pelanggan berhasil dihapus.");
+        try {
+            controller.hapusPelanggan(pelanggan);
+            System.out.println("Pelanggan berhasil dihapus.");
+        } catch (IllegalStateException e) {
+            System.out.println("Gagal: " + e.getMessage());
+        }
     }
 
-    // ==================================================================
     // KELOLA BARBER
-    // ==================================================================
     private void menuBarber() {
         boolean menu = true;
 
@@ -298,7 +243,7 @@ public class Main {
         System.out.println();
         System.out.println("TAMBAH BARBER (ketik 'batal' untuk membatalkan)");
 
-        String id = bacaIdBaru("ID Barber (3-10 huruf/angka): ", kode -> cariBarber(kode) != null);
+        String id = bacaIdBaru("ID Barber (3-10 huruf/angka): ", controller::idBarberSudahAda);
         String nama = bacaNama("Nama Barber: ");
         int pengalaman = bacaPengalaman("Pengalaman Kerja (0-50 tahun): ");
 
@@ -308,10 +253,10 @@ public class Main {
         int jenis = bacaPilihan("Pilih: ", 1, 2);
 
         try {
+            // Memakai overloading di Controller: dengan/tanpa parameter "senior"
             Barber barber = (jenis == 1)
-                    ? new Barber(id, nama, pengalaman)
-                    : new BarberSenior(id, nama, pengalaman);
-            daftarBarber.add(barber);
+                    ? controller.tambahBarber(id, nama, pengalaman)
+                    : controller.tambahBarber(id, nama, pengalaman, true);
             System.out.println("Barber berhasil ditambahkan sebagai " + barber.getPeran() + ".");
         } catch (IllegalArgumentException e) {
             System.out.println("Gagal: " + e.getMessage());
@@ -322,12 +267,12 @@ public class Main {
         System.out.println();
         System.out.println("DAFTAR BARBER");
 
-        if (daftarBarber.isEmpty()) {
+        if (controller.getDaftarBarber().isEmpty()) {
             System.out.println("Data barber masih kosong.");
             return;
         }
 
-        for (Barber barber : daftarBarber) {
+        for (Barber barber : controller.getDaftarBarber()) {
             System.out.println("==========================");
             barber.tampilkanData();
             System.out.println("==========================");
@@ -337,7 +282,7 @@ public class Main {
     private void ubahBarber() {
         System.out.println();
         System.out.println("UBAH BARBER (ketik 'batal' untuk membatalkan)");
-        Barber barber = cariBarber(bacaInput("Masukkan ID Barber: "));
+        Barber barber = controller.cariBarber(bacaInput("Masukkan ID Barber: "));
 
         if (barber == null) {
             System.out.println("Barber tidak ditemukan.");
@@ -348,8 +293,7 @@ public class Main {
         int pengalaman = bacaPengalaman("Pengalaman baru (0-50 tahun): ");
 
         try {
-            barber.setNamaBarber(nama);
-            barber.setPengalaman(pengalaman);
+            controller.ubahBarber(barber, nama, pengalaman);
             System.out.println("Data barber berhasil diubah.");
         } catch (IllegalArgumentException e) {
             System.out.println("Gagal: " + e.getMessage());
@@ -359,16 +303,10 @@ public class Main {
     private void hapusBarber() {
         System.out.println();
         System.out.println("HAPUS BARBER (ketik 'batal' untuk membatalkan)");
-        Barber barber = cariBarber(bacaInput("Masukkan ID Barber: "));
+        Barber barber = controller.cariBarber(bacaInput("Masukkan ID Barber: "));
 
         if (barber == null) {
             System.out.println("Barber tidak ditemukan.");
-            return;
-        }
-
-        if (barber.getJumlahPelangganAktif() > 0) {
-            System.out.println("Barber masih memiliki pelanggan aktif.");
-            System.out.println("Barber tidak dapat dihapus.");
             return;
         }
 
@@ -377,14 +315,18 @@ public class Main {
             return;
         }
 
-        daftarBarber.remove(barber);
-        System.out.println("Barber berhasil dihapus.");
+        try {
+            controller.hapusBarber(barber);
+            System.out.println("Barber berhasil dihapus.");
+        } catch (IllegalStateException e) {
+            System.out.println("Gagal: " + e.getMessage());
+        }
     }
 
     private void ubahStatusBarber() {
         System.out.println();
         System.out.println("UBAH STATUS KEHADIRAN (ketik 'batal' untuk membatalkan)");
-        Barber barber = cariBarber(bacaInput("Masukkan ID Barber: "));
+        Barber barber = controller.cariBarber(bacaInput("Masukkan ID Barber: "));
 
         if (barber == null) {
             System.out.println("Barber tidak ditemukan.");
@@ -395,38 +337,28 @@ public class Main {
         System.out.println("2. Tidak Tersedia");
         int pilihan = bacaPilihan("Pilih status: ", 1, 2);
 
-        if (pilihan == 1) {
-            barber.setStatusKehadiran(Barber.HADIR_AKTIF);
-            System.out.println("Barber sekarang aktif.");
-        } else {
-            if (barber.getJumlahPelangganAktif() > 0) {
-                System.out.println("Barber masih memiliki pelanggan aktif.");
-                System.out.println("Selesaikan atau batalkan pelayanan terlebih dahulu.");
-                return;
-            }
-            barber.setStatusKehadiran(Barber.HADIR_TIDAK_TERSEDIA);
-            System.out.println("Barber sekarang tidak tersedia.");
+        try {
+            controller.ubahStatusBarber(barber, pilihan == 1);
+            System.out.println(pilihan == 1 ? "Barber sekarang aktif." : "Barber sekarang tidak tersedia.");
+        } catch (IllegalStateException e) {
+            System.out.println("Gagal: " + e.getMessage());
         }
     }
 
-    // ==================================================================
     // LAYANAN
-    // ==================================================================
     private void tampilkanLayanan() {
         System.out.println();
         System.out.println("DAFTAR LAYANAN");
 
-        for (int i = 0; i < daftarLayanan.size(); i++) {
-            Layanan layanan = daftarLayanan.get(i);
+        for (int i = 0; i < controller.getDaftarLayanan().size(); i++) {
+            Layanan layanan = controller.getDaftarLayanan().get(i);
             System.out.println((i + 1) + ". " + layanan.getNamaLayanan()
                     + " | " + Format.rupiah(layanan.getHarga())
                     + " | " + layanan.getDurasiMenit() + " menit");
         }
     }
 
-    // ==================================================================
     // PELAYANAN PELANGGAN
-    // ==================================================================
     private void menuPelayanan() {
         boolean menu = true;
 
@@ -475,104 +407,73 @@ public class Main {
         System.out.println();
         System.out.println("DAFTARKAN PELAYANAN (ketik 'batal' untuk membatalkan)");
 
-        if (daftarPelanggan.isEmpty()) {
+        if (controller.getDaftarPelanggan().isEmpty()) {
             System.out.println("Belum ada data pelanggan.");
             return;
         }
-
-        if (daftarBarber.isEmpty()) {
+        if (controller.getDaftarBarber().isEmpty()) {
             System.out.println("Belum ada data barber.");
             return;
         }
 
-        Pelanggan pelanggan = cariPelanggan(bacaInput("Masukkan ID Pelanggan: "));
-
+        Pelanggan pelanggan = controller.cariPelanggan(bacaInput("Masukkan ID Pelanggan: "));
         if (pelanggan == null) {
             System.out.println("Pelanggan tidak ditemukan.");
             return;
         }
 
-        if (punyaPelayananAktif(pelanggan.getIdPelanggan())) {
-            System.out.println("Pelanggan masih memiliki pelayanan aktif.");
-            return;
-        }
-
         System.out.println();
         System.out.println("Daftar Barber:");
-        for (Barber b : daftarBarber) {
+        for (Barber b : controller.getDaftarBarber()) {
             System.out.println(b.getIdBarber() + " | " + b.getNamaBarber() + " | " + b.getPeran()
                     + " | " + b.getJumlahPelangganAktif() + "/" + b.getKapasitas()
                     + " | " + b.getStatusBarber());
         }
 
-        Barber barber = cariBarber(bacaInput("Pilih ID Barber: "));
-
+        Barber barber = controller.cariBarber(bacaInput("Pilih ID Barber: "));
         if (barber == null) {
             System.out.println("Barber tidak ditemukan.");
             return;
         }
 
-        if (barber.getStatusBarber().equals(Barber.PENUH)) {
-            System.out.println("Barber sudah penuh.");
-            System.out.println("Silakan pilih barber lain.");
-            return;
-        }
-
-        if (barber.getStatusBarber().equals(Barber.TIDAK_TERSEDIA)) {
-            System.out.println("Barber sedang tidak tersedia.");
-            return;
-        }
-
         tampilkanLayanan();
-        int nomorLayanan = bacaPilihan("Pilih nomor layanan: ", 1, daftarLayanan.size());
-        Layanan layanan = daftarLayanan.get(nomorLayanan - 1);
+        int nomorLayanan = bacaPilihan("Pilih nomor layanan: ", 1, controller.getDaftarLayanan().size());
+        Layanan layanan = controller.getDaftarLayanan().get(nomorLayanan - 1);
 
-        Pelayanan pelayanan = buatPelayanan(pelanggan, barber, layanan);
+        try {
+            Pelayanan pelayanan = controller.buatPelayanan(pelanggan, barber, layanan);
 
-        // Rincian biaya (polimorfisme: nilai tergantung jenis barber & pelanggan)
-        int biayaBarber = barber.getBiayaTambahan();
-        int diskon = pelanggan.hitungDiskon(layanan.getHarga() + biayaBarber);
+            // Rincian biaya untuk ditampilkan (polimorfisme: nilai tergantung jenis objek)
+            int biayaBarber = barber.getBiayaTambahan();
+            int diskon = pelanggan.hitungDiskon(layanan.getHarga() + biayaBarber);
 
-        System.out.println();
-        System.out.println("Pelayanan berhasil didaftarkan.");
-        System.out.println("ID Pelayanan  : " + pelayanan.getIdPelayanan());
-        System.out.println("Pelanggan     : " + pelanggan.getNama() + " (" + pelanggan.getPeran() + ")");
-        System.out.println("Barber        : " + barber.getNamaBarber() + " (" + barber.getPeran() + ")");
-        System.out.println("Layanan       : " + layanan.getNamaLayanan());
-        System.out.println("Nomor Antrean : " + pelayanan.getNomorAntrean());
-        System.out.println("Harga Layanan : " + Format.rupiah(layanan.getHarga()));
-        System.out.println("Biaya Barber  : " + Format.rupiah(biayaBarber));
-        System.out.println("Diskon        : -" + Format.rupiah(diskon));
-        System.out.println("Total         : " + Format.rupiah(pelayanan.getTotalBayar()));
-        System.out.println("Status        : " + pelayanan.getStatusPelayanan());
-    }
-
-    /** Membuat pelayanan baru, menghitung total, memperbarui antrean & beban barber. */
-    private Pelayanan buatPelayanan(Pelanggan pelanggan, Barber barber, Layanan layanan) {
-        int subtotal = layanan.getHarga() + barber.getBiayaTambahan();
-        int total = subtotal - pelanggan.hitungDiskon(subtotal);
-
-        String idPelayanan = "PL" + String.format("%03d", nomorPelayananBerikutnya);
-        Pelayanan pelayanan = new Pelayanan(idPelayanan, pelanggan.getIdPelanggan(),
-                barber.getIdBarber(), layanan.getIdLayanan(), nomorAntreanBerikutnya, total);
-
-        barber.tambahPelanggan();
-        daftarPelayanan.add(pelayanan);
-        nomorPelayananBerikutnya++;
-        nomorAntreanBerikutnya++;
-        return pelayanan;
+            System.out.println();
+            System.out.println("Pelayanan berhasil didaftarkan.");
+            System.out.println("ID Pelayanan  : " + pelayanan.getIdPelayanan());
+            System.out.println("Pelanggan     : " + pelanggan.getNama() + " (" + pelanggan.getPeran() + ")");
+            System.out.println("Barber        : " + barber.getNamaBarber() + " (" + barber.getPeran() + ")");
+            System.out.println("Layanan       : " + layanan.getNamaLayanan());
+            System.out.println("Nomor Antrean : " + pelayanan.getNomorAntrean());
+            System.out.println("Harga Layanan : " + Format.rupiah(layanan.getHarga()));
+            System.out.println("Biaya Barber  : " + Format.rupiah(biayaBarber));
+            System.out.println("Diskon        : -" + Format.rupiah(diskon));
+            System.out.println("Total         : " + Format.rupiah(pelayanan.getTotalBayar()));
+            System.out.println("Status        : " + pelayanan.getStatusPelayanan());
+        } catch (IllegalStateException e) {
+            System.out.println("Gagal: " + e.getMessage());
+        }
     }
 
     private void tampilkanSemuaPelayanan() {
         System.out.println();
         System.out.println("DAFTAR PELAYANAN");
 
-        if (daftarPelayanan.isEmpty()) {
+        if (controller.getDaftarPelayanan().isEmpty()) {
             System.out.println("Belum ada pelayanan.");
             return;
         }
 
-        for (Pelayanan pelayanan : daftarPelayanan) {
+        for (Pelayanan pelayanan : controller.getDaftarPelayanan()) {
             System.out.println("=============================");
             tampilkanDetailPelayanan(pelayanan);
             System.out.println("=============================");
@@ -581,50 +482,42 @@ public class Main {
 
     private void mulaiPelayanan() {
         System.out.println();
-        Pelayanan pelayanan = cariPelayanan(bacaInput("Masukkan ID Pelayanan: "));
+        Pelayanan pelayanan = controller.cariPelayanan(bacaInput("Masukkan ID Pelayanan: "));
 
         if (pelayanan == null) {
             System.out.println("Pelayanan tidak ditemukan.");
             return;
         }
 
-        if (!pelayanan.getStatusPelayanan().equals(Pelayanan.MENUNGGU)) {
-            System.out.println("Pelayanan tidak dapat dimulai.");
-            return;
+        try {
+            controller.mulaiPelayanan(pelayanan);
+            System.out.println("Pelayanan sedang diproses.");
+        } catch (IllegalStateException e) {
+            System.out.println("Gagal: " + e.getMessage());
         }
-
-        pelayanan.setStatusPelayanan(Pelayanan.DIPROSES);
-        System.out.println("Pelayanan sedang diproses.");
     }
 
     private void selesaikanPelayanan() {
         System.out.println();
-        Pelayanan pelayanan = cariPelayanan(bacaInput("Masukkan ID Pelayanan: "));
+        Pelayanan pelayanan = controller.cariPelayanan(bacaInput("Masukkan ID Pelayanan: "));
 
         if (pelayanan == null) {
             System.out.println("Pelayanan tidak ditemukan.");
             return;
         }
 
-        if (!pelayanan.getStatusPelayanan().equals(Pelayanan.DIPROSES)) {
-            System.out.println("Pelayanan belum dalam proses.");
-            return;
+        try {
+            controller.selesaikanPelayanan(pelayanan);
+            System.out.println("Pelayanan selesai.");
+            System.out.println("Silakan lakukan pembayaran.");
+        } catch (IllegalStateException e) {
+            System.out.println("Gagal: " + e.getMessage());
         }
-
-        Barber barber = cariBarber(pelayanan.getIdBarber());
-        pelayanan.setStatusPelayanan(Pelayanan.SELESAI);
-
-        if (barber != null) {
-            barber.kurangiPelanggan();
-        }
-
-        System.out.println("Pelayanan selesai.");
-        System.out.println("Silakan lakukan pembayaran.");
     }
 
     private void pembayaran() {
         System.out.println();
-        Pelayanan pelayanan = cariPelayanan(bacaInput("Masukkan ID Pelayanan: "));
+        Pelayanan pelayanan = controller.cariPelayanan(bacaInput("Masukkan ID Pelayanan: "));
 
         if (pelayanan == null) {
             System.out.println("Pelayanan tidak ditemukan.");
@@ -632,13 +525,7 @@ public class Main {
         }
 
         if (!pelayanan.getStatusPelayanan().equals(Pelayanan.SELESAI)) {
-            System.out.println("Pembayaran belum dapat dilakukan.");
-            System.out.println("Pelayanan belum selesai.");
-            return;
-        }
-
-        if (pelayanan.getStatusPembayaran().equals(Pelayanan.LUNAS)) {
-            System.out.println("Pelayanan sudah dibayar.");
+            System.out.println("Pembayaran belum dapat dilakukan. Pelayanan belum selesai.");
             return;
         }
 
@@ -647,44 +534,40 @@ public class Main {
         System.out.println("1. Tunai");
         System.out.println("2. QRIS");
         int pilihan = bacaPilihan("Pilih: ", 1, 2);
+        String metode = (pilihan == 1) ? Pelayanan.TUNAI : Pelayanan.QRIS;
 
-        pelayanan.setMetodePembayaran(pilihan == 1 ? Pelayanan.TUNAI : Pelayanan.QRIS);
-        pelayanan.setStatusPembayaran(Pelayanan.LUNAS);
-
-        System.out.println();
-        System.out.println("Pembayaran berhasil.");
-        System.out.println("Total  : " + Format.rupiah(pelayanan.getTotalBayar()));
-        System.out.println("Metode : " + pelayanan.getMetodePembayaran());
-        System.out.println("Status : " + pelayanan.getStatusPembayaran());
+        try {
+            controller.bayarPelayanan(pelayanan, metode);
+            System.out.println();
+            System.out.println("Pembayaran berhasil.");
+            System.out.println("Total  : " + Format.rupiah(pelayanan.getTotalBayar()));
+            System.out.println("Metode : " + pelayanan.getMetodePembayaran());
+            System.out.println("Status : " + pelayanan.getStatusPembayaran());
+        } catch (IllegalStateException e) {
+            System.out.println("Gagal: " + e.getMessage());
+        }
     }
 
     private void batalkanPelayanan() {
         System.out.println();
-        Pelayanan pelayanan = cariPelayanan(bacaInput("Masukkan ID Pelayanan: "));
+        Pelayanan pelayanan = controller.cariPelayanan(bacaInput("Masukkan ID Pelayanan: "));
 
         if (pelayanan == null) {
             System.out.println("Pelayanan tidak ditemukan.");
             return;
         }
 
-        if (!pelayanan.getStatusPelayanan().equals(Pelayanan.MENUNGGU)) {
-            System.out.println("Hanya pelayanan berstatus Menunggu yang dapat dibatalkan.");
-            return;
+        try {
+            controller.batalkanPelayanan(pelayanan);
+            System.out.println("Pelayanan berhasil dibatalkan.");
+        } catch (IllegalStateException e) {
+            System.out.println("Gagal: " + e.getMessage());
         }
-
-        Barber barber = cariBarber(pelayanan.getIdBarber());
-        pelayanan.setStatusPelayanan(Pelayanan.DIBATALKAN);
-
-        if (barber != null) {
-            barber.kurangiPelanggan();
-        }
-
-        System.out.println("Pelayanan berhasil dibatalkan.");
     }
 
     private void cekStatusPelanggan() {
         System.out.println();
-        Pelanggan pelanggan = cariPelanggan(bacaInput("Masukkan ID Pelanggan: "));
+        Pelanggan pelanggan = controller.cariPelanggan(bacaInput("Masukkan ID Pelanggan: "));
 
         if (pelanggan == null) {
             System.out.println("Pelanggan tidak ditemukan.");
@@ -695,7 +578,7 @@ public class Main {
         System.out.println();
         System.out.println("STATUS PELANGGAN: " + pelanggan.getNama() + " (" + pelanggan.getPeran() + ")");
 
-        for (Pelayanan pelayanan : daftarPelayanan) {
+        for (Pelayanan pelayanan : controller.getDaftarPelayanan()) {
             if (pelayanan.getIdPelanggan().equalsIgnoreCase(pelanggan.getIdPelanggan())) {
                 System.out.println("-----------------------------");
                 tampilkanDetailPelayanan(pelayanan);
@@ -709,9 +592,9 @@ public class Main {
     }
 
     private void tampilkanDetailPelayanan(Pelayanan pelayanan) {
-        Pelanggan pelanggan = cariPelanggan(pelayanan.getIdPelanggan());
-        Barber barber = cariBarber(pelayanan.getIdBarber());
-        Layanan layanan = cariLayanan(pelayanan.getIdLayanan());
+        Pelanggan pelanggan = controller.cariPelanggan(pelayanan.getIdPelanggan());
+        Barber barber = controller.cariBarber(pelayanan.getIdBarber());
+        Layanan layanan = controller.cariLayanan(pelayanan.getIdLayanan());
 
         System.out.println("ID Pelayanan      : " + pelayanan.getIdPelayanan());
         if (pelanggan != null) {
@@ -730,163 +613,47 @@ public class Main {
         System.out.println("Metode            : " + pelayanan.getMetodePembayaran());
     }
 
-    // ==================================================================
     // RINGKASAN
-    // ==================================================================
     private void tampilkanRingkasan() {
         System.out.println();
         System.out.println("RINGKASAN BARBERSHOP");
         System.out.println("============================");
 
-        int jumlahMember = 0;
-        for (Pelanggan pelanggan : daftarPelanggan) {
-            if (pelanggan instanceof PelangganMember) {
-                jumlahMember++;
-            }
-        }
+        int totalPelanggan = controller.getDaftarPelanggan().size();
+        int totalBarber = controller.getDaftarBarber().size();
+        int jumlahMember = controller.getJumlahPelangganMember();
+        int jumlahSenior = controller.getJumlahBarberSenior();
 
-        int jumlahSenior = 0;
-        for (Barber barber : daftarBarber) {
-            if (barber instanceof BarberSenior) {
-                jumlahSenior++;
-            }
-        }
-
-        System.out.println("Total Pelanggan      : " + daftarPelanggan.size()
-                + " (Member: " + jumlahMember + ", Reguler: " + (daftarPelanggan.size() - jumlahMember) + ")");
-        System.out.println("Total Barber         : " + daftarBarber.size()
-                + " (Senior: " + jumlahSenior + ", Biasa: " + (daftarBarber.size() - jumlahSenior) + ")");
-        System.out.println("Total Layanan        : " + daftarLayanan.size());
-
-        int tersedia = 0;
-        int melayani = 0;
-        int penuh = 0;
-        int tidakTersedia = 0;
-
-        for (Barber barber : daftarBarber) {
-            switch (barber.getStatusBarber()) {
-                case Barber.TERSEDIA:
-                    tersedia++;
-                    break;
-                case Barber.MELAYANI:
-                    melayani++;
-                    break;
-                case Barber.PENUH:
-                    penuh++;
-                    break;
-                default:
-                    tidakTersedia++;
-            }
-        }
+        System.out.println("Total Pelanggan      : " + totalPelanggan
+                + " (Member: " + jumlahMember + ", Reguler: " + (totalPelanggan - jumlahMember) + ")");
+        System.out.println("Total Barber         : " + totalBarber
+                + " (Senior: " + jumlahSenior + ", Biasa: " + (totalBarber - jumlahSenior) + ")");
+        System.out.println("Total Layanan        : " + controller.getDaftarLayanan().size());
 
         System.out.println();
         System.out.println("Status Barber");
-        System.out.println("  Tersedia           : " + tersedia);
-        System.out.println("  Melayani           : " + melayani);
-        System.out.println("  Penuh              : " + penuh);
-        System.out.println("  Tidak Tersedia     : " + tidakTersedia);
-
-        int menunggu = 0;
-        int diproses = 0;
-        int selesai = 0;
-        int dibatalkan = 0;
-        int pendapatan = 0;
-        int pendapatanTunai = 0;
-        int pendapatanQris = 0;
-        int belumDibayar = 0;
-
-        for (Pelayanan pelayanan : daftarPelayanan) {
-            String status = pelayanan.getStatusPelayanan();
-
-            if (status.equals(Pelayanan.MENUNGGU)) {
-                menunggu++;
-            } else if (status.equals(Pelayanan.DIPROSES)) {
-                diproses++;
-            } else if (status.equals(Pelayanan.SELESAI)) {
-                selesai++;
-            } else if (status.equals(Pelayanan.DIBATALKAN)) {
-                dibatalkan++;
-            }
-
-            if (pelayanan.getStatusPembayaran().equals(Pelayanan.LUNAS)) {
-                pendapatan += pelayanan.getTotalBayar();
-                if (pelayanan.getMetodePembayaran().equals(Pelayanan.TUNAI)) {
-                    pendapatanTunai += pelayanan.getTotalBayar();
-                } else if (pelayanan.getMetodePembayaran().equals(Pelayanan.QRIS)) {
-                    pendapatanQris += pelayanan.getTotalBayar();
-                }
-            } else if (status.equals(Pelayanan.SELESAI)) {
-                belumDibayar += pelayanan.getTotalBayar();
-            }
-        }
+        System.out.println("  Tersedia           : " + controller.getJumlahBarberDenganStatus(Barber.TERSEDIA));
+        System.out.println("  Melayani           : " + controller.getJumlahBarberDenganStatus(Barber.MELAYANI));
+        System.out.println("  Penuh              : " + controller.getJumlahBarberDenganStatus(Barber.PENUH));
+        System.out.println("  Tidak Tersedia     : " + controller.getJumlahBarberDenganStatus(Barber.TIDAK_TERSEDIA));
 
         System.out.println();
-        System.out.println("Status Pelayanan (total " + daftarPelayanan.size() + ")");
-        System.out.println("  Menunggu           : " + menunggu);
-        System.out.println("  Diproses           : " + diproses);
-        System.out.println("  Selesai            : " + selesai);
-        System.out.println("  Dibatalkan         : " + dibatalkan);
+        System.out.println("Status Pelayanan (total " + controller.getDaftarPelayanan().size() + ")");
+        System.out.println("  Menunggu           : " + controller.getJumlahPelayananDenganStatus(Pelayanan.MENUNGGU));
+        System.out.println("  Diproses           : " + controller.getJumlahPelayananDenganStatus(Pelayanan.DIPROSES));
+        System.out.println("  Selesai            : " + controller.getJumlahPelayananDenganStatus(Pelayanan.SELESAI));
+        System.out.println("  Dibatalkan         : " + controller.getJumlahPelayananDenganStatus(Pelayanan.DIBATALKAN));
 
         System.out.println();
         System.out.println("Pendapatan");
-        System.out.println("  Total Diterima     : " + Format.rupiah(pendapatan));
-        System.out.println("    - Tunai          : " + Format.rupiah(pendapatanTunai));
-        System.out.println("    - QRIS           : " + Format.rupiah(pendapatanQris));
-        System.out.println("  Belum Dibayar      : " + Format.rupiah(belumDibayar));
+        System.out.println("  Total Diterima     : " + Format.rupiah(controller.getTotalPendapatan()));
+        System.out.println("    - Tunai          : " + Format.rupiah(controller.getPendapatanBerdasarkanMetode(Pelayanan.TUNAI)));
+        System.out.println("    - QRIS           : " + Format.rupiah(controller.getPendapatanBerdasarkanMetode(Pelayanan.QRIS)));
+        System.out.println("  Belum Dibayar      : " + Format.rupiah(controller.getTotalBelumDibayar()));
         System.out.println("============================");
     }
 
-    // ==================================================================
-    // PENCARIAN (private: hanya dipakai di dalam class ini)
-    // ==================================================================
-    private Pelanggan cariPelanggan(String id) {
-        for (Pelanggan pelanggan : daftarPelanggan) {
-            if (pelanggan.getIdPelanggan().equalsIgnoreCase(id)) {
-                return pelanggan;
-            }
-        }
-        return null;
-    }
-
-    private Barber cariBarber(String id) {
-        for (Barber barber : daftarBarber) {
-            if (barber.getIdBarber().equalsIgnoreCase(id)) {
-                return barber;
-            }
-        }
-        return null;
-    }
-
-    private Layanan cariLayanan(String id) {
-        for (Layanan layanan : daftarLayanan) {
-            if (layanan.getIdLayanan().equalsIgnoreCase(id)) {
-                return layanan;
-            }
-        }
-        return null;
-    }
-
-    private Pelayanan cariPelayanan(String id) {
-        for (Pelayanan pelayanan : daftarPelayanan) {
-            if (pelayanan.getIdPelayanan().equalsIgnoreCase(id)) {
-                return pelayanan;
-            }
-        }
-        return null;
-    }
-
-    private boolean punyaPelayananAktif(String idPelanggan) {
-        for (Pelayanan pelayanan : daftarPelayanan) {
-            if (pelayanan.getIdPelanggan().equalsIgnoreCase(idPelanggan) && pelayanan.isAktif()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // ==================================================================
     // INPUT & VALIDASI (semua berulang sampai input benar, atau ketik "batal")
-    // ==================================================================
     /** Menjalankan satu aksi menu; jika pengguna mengetik "batal", aksi dihentikan. */
     private void jalankan(Runnable aksi) {
         try {
